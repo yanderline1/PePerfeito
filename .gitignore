@@ -1,0 +1,56 @@
+# Ignore Maven build output
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# Exclude build directories except in src/main and src/test
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+.vscode/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/nb-gradle/
+
+# macOS
+.DS_Store
+
+# Node.js (frontend)
+node_modules/
+frontend/**/node_modules/
+frontend/**/dist/
+
+# Local environment files
+.env.local
+.env.*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Miscellaneous
+HELP.md
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# Temporary files
+.tmp.driveupload/
