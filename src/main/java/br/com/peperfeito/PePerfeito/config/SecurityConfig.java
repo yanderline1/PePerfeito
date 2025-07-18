@@ -7,9 +7,11 @@ import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -40,18 +42,42 @@ public class SecurityConfig {
     @Bean // Marca o método como um produtor de um bean gerenciado pelo Spring
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .cors(Customizer.withDefaults()) // Habilita CORS
+            .csrf(AbstractHttpConfigurer::disable) // Desabilita CSRF, que é comum para APIs REST stateless
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/", "/login").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/usuarios").hasRole("MESTRE")
                 .requestMatchers(HttpMethod.PUT, "/usuarios/**").hasRole("MESTRE")
                 .requestMatchers(HttpMethod.DELETE, "/usuarios/**").hasRole("MESTRE")
-                .anyRequest().authenticated() // Permite todas as requisições HTTP
+                .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults()) // Configura autenticação básica
-            .formLogin(Customizer.withDefaults())
-            .cors(Customizer.withDefaults()) // Habilita CORS
-            .csrf(csrf -> csrf.disable()); // Desabilita CSRF, que é comum para APIs REST stateless
+            .formLogin(formLogin -> formLogin
+                .successHandler((request, response, authentication) -> {
+                    // Lógica para sucesso de login (para requisições REST)
+                    response.setStatus(200);
+                    response.setContentType("aplication/json");
+                    response.getWriter().write("{\\\"status\\\": 200, \\\"message\\\": \\\"Login successful!\\\"}"); // Ou um JSON com informações do usuário/token
+                    response.getWriter().flush();
+                })
+                .failureHandler((request, response, exception) -> {
+                    // Lógica para falha de login (para requisições REST)
+                    int statusCode = 401;
+                    String errorMessage = "Login failed: " + exception.getMessage();
+                    if(exception instanceof BadCredentialsException) {
+                        errorMessage = "Credenciais inválidas.";
+                    } else {
+                        statusCode = 500;
+                        errorMessage = "Erro interno do servidor: " + exception.getMessage();
+                    }
+                    response.setStatus(statusCode);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\\\"status\\\": " + statusCode + ", \\\"message\\\": \\\"" + errorMessage + "\\\"}");
+                    response.getWriter().flush();
+                })
+            )
+            .logout(logout -> logout .permitAll()); // Permite que todos acessem o logout
         return http.build();
     }
 

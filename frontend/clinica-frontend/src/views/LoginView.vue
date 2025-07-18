@@ -21,7 +21,7 @@
   <ErrorDialog 
   :isVisible="showErrorDialog" 
   :message="dialogMessage"
-  @close= "showErrorDialog = false"
+  @close="showErrorDialog = false"
   />
 </template>
 
@@ -45,16 +45,12 @@ export default {
   },
   methods: {
     async handleLogin() {
-      this.errorMessage = '';
+      // this.errorMessage = '';
       this.showErrorDialog = false;
       this.dialogMessage = '';
-      try{
-        const LOGIN_URL = 'http://localhost:8080/login'; // URL do backend
+      try {
+        const LOGIN_URL = 'http://localhost:8080/login'; // Ou apenas '/login' se você configurou o proxy
 
-        // const auth = {
-        //   username: this.username,
-        //   password: this.password
-        // }
         const params = new URLSearchParams();
         params.append('username', this.username);
         params.append('password', this.password);
@@ -66,36 +62,51 @@ export default {
         });
 
         if (response.status === 200 || response.status === 302) {
-          console.log('Login bem-sucedido!', response); // A resposta pode ser o HTML de uma página pós-login
-          // Redireciona para o dashboard ou página inicial após o login.
-          // Agora o navegador terá o cookie de sessão do Spring Security.
-          router.push({ name: 'Index' }); 
+          console.log('Login bem-sucedido!', response);
+          // Armazenar estado de autenticação (ex: token, flag)
+          // localStorage.setItem('isAuthenticated', 'true'); // Exemplo
+          router.push({ name: 'Index' });
         } else {
-          this.dialogMessage = 'Erro desconhecido no login.';
+          // Se o status não for 200 ou 302, tratar como erro
+          this.dialogMessage = 'Erro desconhecido no login. Código de status: ' + response.status;
           this.showErrorDialog = true;
         }
-        
+
       } catch (error) {
-        console.error('Erro ao fazer login', error);
-        if(error.response && error.response.status === 401) {
-          this.errorMessage = 'Credenciais de login inválidas.';
-          this.dialogMessage = 'ERRO 401';
-          console.log("Mensagem de erro definida") // colocado para depuração
-        }
-        if(error.response && error.response.status === 403) {
-          this.errorMessage = 'Acesso negado. Verifique suas credenciais.';
-          this.dialogMessage = 'ERRO 403';
-        }
-        if(error.response && error.response.status === 404) {
-          this.errorMessage = 'Usuário ou página não encontrada usuario;.';
-          this.dialogMessage = 'ERRO 404';
-        }
-        if(error.response && error.response.status === 500) {
-          this.errorMessage = 'Erro interno do servidor. Tente novamente mais tarde.';
-          this.dialogMessage = 'ERRO 500';
+        console.error('Erro ao fazer login:', error);
+
+        if (error.response) {
+          const statusCode = error.response.status;
+          const responseData = error.response.data;
+
+          let backendErrorMessage = 'Erro desconhecido.';
+          if (responseData && typeof responseData === 'object' && responseData.message) {
+            backendErrorMessage = responseData.message;
+          } else if (typeof responseData === 'string') {
+            backendErrorMessage = responseData;
+          } else { // Para outros status HTTP de erro
+            `Erro HTTP: ${statusCode}`;
+          }
+
+          switch (statusCode) {
+            case 400:
+              this.dialogMessage = 'Requisição inválida. Verifique os dados.';
+              break;
+            case 401:
+              this.dialogMessage = 'Credenciais inválidas. Por favor, tente novamente.';
+              break;
+            case 500:
+              this.dialogMessage = 'Erro interno do servidor. Tente novamente mais tarde.';
+              break;
+            default:
+              this.dialogMessage = backendErrorMessage || 'Erro desconhecido. Código de status: ' + statusCode;
+          }
+        } else if(error.request) {
+          // A requisição foi feita, mas não houve resposta
+          this.dialogMessage = 'Erro de rede. Verifique sua conexão.';
         } else {
-          this.errorMessage = 'Erro ao conectar com o servidor. Tente novamente mais tarde.';
-          this.dialogMessage = 'Erro de conexão';
+          // Algo aconteceu ao configurar a requisição
+          this.dialogMessage = 'Erro ao configurar a requisição: ' + error.message;
         }
         this.showErrorDialog = true;
       }
@@ -186,7 +197,7 @@ h1 {
   transition: background-color 0.3s ease;
 }
 
-.login-button :hover {
+.login-button:hover {
   background-color: var(--dark-orange);
 }
 </style>
