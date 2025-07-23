@@ -1,9 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-import IndexView from "../views/IndexView.vue"; // Renomeado para consistência
-import HomeView from "../views/HomeView.vue";
-import LoginView from "../views/LoginView.vue";
-// Não precisa importar DashboardView se foi descartado e não será usado.
+import IndexView from "../views/IndexView.vue";
 
 const routes = [
     {
@@ -14,12 +11,12 @@ const routes = [
     {
         path: '/home',
         name: 'Home',
-        component: HomeView
+        component: () => import('../views/HomeView.vue')
     },
     {
         path: '/login',
         name: 'Login',
-        component: LoginView
+        component: ()=> import('../views/LoginView.vue')
     }
 ];
 
@@ -29,21 +26,23 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    // Verifica se a rota para a qual estamos navegando (to) ou qualquer um de seus ancestrais
-    // tem a meta propriedade 'requiresAuth' definida como true
-    if (to.matched.some(record => record.meta.requiresAuth)) {
-        // <<< IMPORTANTE: Esta é a sua lógica real de verificação de autenticação
-        // Você precisará de um sistema de estado global (como Pinia ou Vuex) para isso
-        const isAuthenticated = false; // <<< SUBSTITUA ISSO PELA SUA VARIÁVEL DE ESTADO DE AUTENTICAÇÃO REAL
+const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const isAuthenticated = localStorage.getItem('jwt_token'); // Verifica se há um token armazenado
 
-        if (!isAuthenticated) {
-            next({ name: 'Login' }); // Se não estiver autenticado, redireciona para a rota de login
-        } else {
-            next(); // Se estiver autenticado, permite a navegação
-        }
-    } else {
-        next(); // Se a rota não requer autenticação, permite a navegação
-    }
+  if (requiresAuth && !isAuthenticated) {
+    // Se a rota exige autenticação e não há token, redireciona para o login
+    next({ name: 'Login' });
+  } else if (to.name === 'Login' && isAuthenticated) {
+    // Se o usuário já tem um token e tenta ir para a página de login, redireciona para a home
+    next({ name: 'Home' }); // Ou o nome da sua rota principal autenticada (ex: 'Dashboard')
+  } else if (to.name === 'Index' && isAuthenticated) {
+    // Se o usuário já tem um token e tenta ir para a página Splash, redireciona para a home
+    next({ name: 'Home' }); // Para evitar que usuários logados vejam a splash novamente
+  }
+  else {
+    // Permite a navegação
+    next();
+  }
 });
 
 export default router;

@@ -15,8 +15,7 @@ export default {
   },
   computed: {
     shouldShowNavbar() {
-      // Exibir a Navbar apenas se não estiver na rota de login
-      return this.$route.path !== '/login';
+      return this.$route.path !== '/login' && this.$route.path !== '/';
     }
   }
 };

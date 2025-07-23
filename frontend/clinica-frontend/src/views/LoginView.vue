@@ -51,20 +51,17 @@ export default {
       try {
         const LOGIN_URL = 'http://localhost:8080/login'; // Ou apenas '/login' se você configurou o proxy
 
-        const params = new URLSearchParams();
-        params.append('username', this.username);
-        params.append('password', this.password);
+        const requestBody = {
+          username: this.username,
+          password: this.password
+        }
 
-        const response = await axios.post(LOGIN_URL, params, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        });
+        const response = await axios.post(LOGIN_URL, requestBody);
 
         if (response.status === 200 || response.status === 302) {
-          console.log('Login bem-sucedido!', response);
+          console.log('Login bem-sucedido!');
           // Armazenar estado de autenticação (ex: token, flag)
-          // localStorage.setItem('isAuthenticated', 'true'); // Exemplo
+          localStorage.setItem('jwt_token', response.data.jwt); // Exemplo
           router.push({ name: 'Index' });
         } else {
           // Se o status não for 200 ou 302, tratar como erro
@@ -132,12 +129,12 @@ export default {
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 60px); /* Ajusta para preencher a tela, menos o nav */
-  background-color: var(--light-grey); /* Fundo suave */
+  background-color: #f4f4f4; /* Fundo suave */
   padding: 20px;
 }
 
 .login-box {
-  background-color: var(--white);
+  background-color: #FFFFFF;
   padding: 40px;
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -152,7 +149,7 @@ export default {
 }
 
 h1 {
-  color: var(--dark-text);
+  color: #2C3E50;
   font-size: 2em;
   margin: 0px;
 }
@@ -172,14 +169,14 @@ h1 {
   display: block;
   font-weight: bold;
   margin-bottom: 8px;
-  color: var(--dark-text);
+  color: #2C3E50;
 }
 
 .login-form input[type="email"],
 .login-form input[type="password"] {
   width: calc(100% - 20px); /* Ajusta padding */
   padding: 10px;
-  border: 1px solid var(--border-grey);
+  border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1em;
 }
@@ -187,8 +184,8 @@ h1 {
 .login-button {
   width: 100%;
   padding: 12px;
-  background-color: var(--primary-orange);
-  color: var(--white);
+  background-color: #FF6600;
+  color: #FFFFFF;
   border: none;
   border-radius: 4px;
   font-size: 1.1em;
@@ -198,6 +195,6 @@ h1 {
 }
 
 .login-button:hover {
-  background-color: var(--dark-orange);
+  background-color: #CC5200;
 }
 </style>
